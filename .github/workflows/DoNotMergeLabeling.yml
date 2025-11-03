@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled, edited, ready_for_review]
   push:
-    branches: ['*']   # or ['PayBill'] if you prefer
+    branches: ['*']   # adjust if you only want it on certain branches (e.g. ['main', 'PayBill'])
 
 jobs:
   enforce-on-pr:
@@ -13,11 +13,11 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Block if any label name or description includes "do not merge"
+      - name: Check labels for 'do not merge'
         env:
           LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
         run: |
-          sudo apt-get update -y && sudo apt-get install -y jq
+          # jq already exists on ubuntu-latest
           echo "$LABELS_JSON" | jq -r '.[] | "\(.name):\(.description // "")"' |
           while IFS=: read -r NAME DESC; do
             if echo "$NAME $DESC" | tr '[:upper:]' '[:lower:]' | grep -q 'do not merge'; then
@@ -25,11 +25,13 @@ jobs:
               exit 1
             fi
           done
-          echo "No blocking labels found."
+          echo "✅ No blocking labels found."
 
   noop-on-push:
     name: Enforce Do Not Merge label
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Push event: passing required check"
+      - run: |
+          echo "Push event: passing required check"
+          exit 0
