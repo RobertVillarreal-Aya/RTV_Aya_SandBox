@@ -1,15 +1,17 @@
-name: Block merge on "do not merge" label or description
+name: Enforce Do Not Merge label
 
 on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled, edited, ready_for_review]
+  push:
+    branches: ['*']   # or ['PayBill'] if you prefer
 
 jobs:
-  block-do-not-merge:
+  enforce-on-pr:
     name: Enforce Do Not Merge label
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Block if any label name or description includes "do not merge"
         env:
@@ -23,4 +25,11 @@ jobs:
               exit 1
             fi
           done
-          echo "✅ No blocking labels found."
+          echo "No blocking labels found."
+
+  noop-on-push:
+    name: Enforce Do Not Merge label
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Push event: passing required check"
